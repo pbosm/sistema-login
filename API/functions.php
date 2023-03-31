@@ -69,8 +69,8 @@ class Functions
             $sql->execute();
             $getUserId = $sql->fetchAll();
 
-            foreach ($getUserId as $key => $user) {
-                $getUserId[$key]['id'] = cryptS($user['id']);
+            foreach ($getUserId as $user) {
+                $getUserId['id'] = cryptS($user['id']);
             }
 
             $sessao = $_SESSION["conectado"] = true;
