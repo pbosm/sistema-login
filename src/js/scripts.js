@@ -1,6 +1,7 @@
 let URL = './API/connAPI.php';
 let URLI = '../../API/connAPI.php';
 let user = localStorage.getItem('user');
+let classUser = localStorage.getItem('pseudoClassUser');
 let item = localStorage.getItem('item');
 
 //MODAL FUNÇÕES
@@ -352,8 +353,11 @@ function loginClient() {
                     if (obj.data[0] == true) {
                         $(".notification").empty();
 
-                        let key = obj.data[1];
+                        let key = obj.data[1].id;
                         localStorage.setItem('user', key);
+                        let pseudoClassUser = obj.data[1];
+                        localStorage.setItem('pseudoClassUser', JSON.stringify(pseudoClassUser));
+
                         window.location.href = './src/pages/indexmaster.php'
 
                     } else if (obj.status == 'erro') {
@@ -370,6 +374,7 @@ function loginClient() {
 
 function logout() {
     localStorage.removeItem('user')
+    localStorage.removeItem('pseudoClassUser')
     window.location.href = '../pages/logout.php'
 }
 
@@ -634,7 +639,7 @@ function loadChart() {
 }
 
 function registrationCollaborators() {
-    $('.x-loader').fadeOut();
+    $('.x-loader').fadeIn();
     $('.inputSearch').hide();
     $('.btn-search').hide();
 
@@ -1230,3 +1235,266 @@ function organizeCollaborators(user) {
     }
 }
 
+function getData() {
+    var date = new Date();
+    var day = String(date.getDate()).padStart(2, '0');
+    var month = String(date.getMonth() + 1).padStart(2, '0');
+    var monthName =  date.toLocaleString('default', { month: 'long' });
+    var year = date.getFullYear();
+    var dateNow = day + '/' + month + '/' + year;
+
+    var dataDay = new Date(year, month, 0);
+    var dataEnd = dataDay.getDate() + '/' + month + '/' + year;
+    var msg = $('.msg').text(dateNow + ' até ' + dataEnd);
+
+    return {
+        day: day,
+        month: month,
+        year: year,
+        monthName: monthName,
+        dateNow: dateNow,
+        dataEnd: dataEnd,
+        msg: msg
+    };
+}
+
+function loadFinance() {
+    $('.x-loader').fadeIn();
+    $('.inputSearch').hide();
+    $('.btn-search').hide();
+    var data = getData();
+    
+    let content = {
+        'month': data.month,
+        'year' : data.year,
+        'id'   : user
+    };
+
+    $.ajax({
+        type: 'POST',
+        url: URLI,
+        data: {
+            content: JSON.stringify(content),
+            function: 'getFinanceData',
+        },
+        success: function (obj) {
+            if (obj.status == 'erro') {
+                showError(obj.data);
+            } else {
+                organizeBuys(obj.data);
+                $('.x-loader').fadeOut();
+            }
+        },
+        error: function () {
+            showError('Erro interno');
+        }
+    });
+
+}
+
+function organizeBuys(buy) {
+    $('table.product tbody').empty();
+    var data = getData();
+    data.msg;
+
+    buy.getBuy.forEach(function(buys, index) {
+        var html = $('#templateFinance').html();
+
+        html = html.replace('{{order}}', buys.product);
+        html = html.replace('{{product}}', buys.product);
+        html = html.replace('{{place}}', buys.place);
+        html = html.replace('{{value}}', buys.value);
+        html = html.replace('{{date}}', buys.date);
+
+        $('table.product tbody').append(html);
+    });
+
+    let totalValue = buy.getTotalValue[0].totalValue;
+    $('#totalValue').text(totalValue);
+}
+
+function createProduct() {
+    $('.h-modal-title').html('Cadastrar compra');
+    let html = $('#templateCreate').html();
+    $('.c-modal').html(html);
+
+    toggleModal();
+    var data = getData();
+
+    $('#createForm').validate({
+        rules: {
+            txtProduct: {
+                required: true,
+            },
+            txtValue: {
+                required: true,
+                onlyNumbers: true
+            },
+            txtPlace: {
+                required: true,
+            },
+            txtPassword: {
+                required: true,
+            },
+        },
+        messages: {
+            txtProduct: {
+                required: 'Informe um nome',
+            },
+            txtValue: {
+                required: 'Informe um o valor',
+            },
+            txtPlace: {
+                required: 'Informe um lugar',
+            },
+            txtPassword: {
+                required: 'Informe uma senha'
+            },
+        },
+        submitHandler: function (form) {
+
+            let content = {
+                'product': $('#txtProduct').val(),
+                'value': $('#txtValue').val(),
+                'place': $('#txtPlace').val(),
+                'password': $('#txtPassword').val(),
+                'date': data.dateNow,
+                'user': user
+            };
+
+            $.ajax({
+                type: 'POST',
+                url: URLI,
+                data: {
+                    content: JSON.stringify(content),
+                    function: 'createProduct'
+                },
+                success: function (obj) {
+                    if (obj.status == 'erro') {
+                        showError(obj.data);
+                    } else {
+                        showSuccess('Cadastrado com sucesso!', '../pages/finance.php');
+                    }
+                },
+                error: function () {
+                    $('.notification').html('Página não encontrada');
+                }
+            });
+        }
+    });
+}
+
+function loadDates() {
+    $('.x-loader').fadeIn();
+
+    $('select[name="txtMonth"]').append('<option class="clean" disabled="disabled" selected>Filtro por mês</option>');
+
+    $.ajax({
+        type: 'POST',
+        url: URLI,
+        data: {
+            content: JSON.stringify(user),
+            function: 'getData',
+        },
+        success: function (obj) {
+            if (obj.status == 'erro') {
+                showError(obj.data);
+            } else {
+                let date = obj.data;
+
+                for (var prop in date) {
+                    let dates = date[prop];
+
+                    $('select[name="txtMonth"]').append('<option value="' + dates.month + '">' + dates.month + ' | ' + dates.year + '</option>');
+                }
+
+                $('.x-loader').fadeOut();
+            }
+        },
+        error: function () {
+            showError('Erro interno');
+        }
+    });
+
+}
+
+function filterDate() {
+    $('.loader').fadeIn();
+    var data = getData();
+
+    $('#tableMonth').validate({
+        rules: {
+            txtMonth: {
+                required: true,
+            },
+        },
+        messages: {
+            txtMonth: {
+                required: 'Informe um mês',
+            },
+        },
+        submitHandler: function (form) {
+
+            let content = {
+                'month': $('select[name="txtMonth"]').val(),
+                'year' : data.year,
+                'id'   : user
+            };
+
+            $.ajax({
+                type: 'POST',
+                url: URLI,
+                data: {
+                    content: JSON.stringify(content),
+                    function: 'getFinanceData'
+                },
+                success: function (obj) {
+                    if (obj.status == 'erro') {
+                        showError(obj.data);
+                    } else {
+                        let resultDate = obj.data;
+
+                        let selectMonth = $('select[name="txtMonth"]').val()
+
+                        if (selectMonth == '' || 'Filtro por mês') {
+                            $('.clean').text('Limpar');
+                            $('.clean').prop("disabled", false);
+                        }
+
+                        if (selectMonth == 'Limpar') {
+                            $('.clean').text('Filtro por mês');
+                            window.location.href = '../pages/finance.php';
+                        }
+
+                        organizeFilterDate(resultDate);
+                        $('.loader').fadeOut();
+                    }
+                },
+                error: function () {
+                    showError('Erro interno');
+                }
+            });
+        }
+    });
+}
+
+function organizeFilterDate(resultDate) {
+    $('table.product tbody').empty();
+    var data = getData();
+    data.msg;
+
+    resultDate.getBuy.forEach(function(buys, index) {
+        var html = $('#templateFinance').html();
+    
+        html = html.replace('{{order}}', buys.product);
+        html = html.replace('{{product}}', buys.product);
+        html = html.replace('{{place}}', buys.place);
+        html = html.replace('{{value}}', buys.value);
+        html = html.replace('{{date}}', buys.date);
+
+        $('table.product tbody').append(html);
+    });
+
+    let totalValue = resultDate.getTotalValue[0].totalValue;
+    $('#totalValue').text(totalValue);
+}

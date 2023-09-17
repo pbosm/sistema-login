@@ -8,7 +8,7 @@
         <div id="formSearch" class="d-none d-md-flex">
             <input name="txtSearch" class="inputSearch form-control bg-dark border-0" type="search" placeholder="Search"
                 style="color: white;">
-            <a class="btn btn-search ms-2" href="javascript:searchUser()" style="background-color: #0d6efd;">Pesquisar</a>
+            <a class="btn btn-search ms-2" href="javascript:searchCollaborators()" style="background-color: #0d6efd;">Pesquisar</a>
         </div>
         <div class="navbar-nav align-items-center ms-auto">
             <div class="nav-item dropdown">
@@ -18,6 +18,12 @@
                 </a>
                 <div class="dropdown-menu dropdown-menu-end bg-primary border-0 rounded-0 rounded-bottom m-0">
                     <a href="javascript:logout()" class="dropdown-item">Sair</a>
+                </div>
+                <div class="d-md-none d-block">
+                    <a href="../pages/indexmaster.php" class="nav-item nav-link indexmaster"><i class="fa fa-tachometer-alt me-2"></i>Dashboard</a>
+                    <a href="../pages/registration.php" class="nav-item nav-link registration"><i class="fas fa-book-open me-2"></i>Cadastro</a>
+                    <a href="../pages/launch.php" class="nav-item nav-link launch"><i class="fa fa-keyboard me-2"></i>Lançamento</a>
+                    <a href="../pages/finance.php" class="nav-item nav-link finance"><i class="fa fa-table me-2"></i>Finanças</a>
                 </div>
             </div>
         </div>

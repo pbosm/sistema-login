@@ -26,7 +26,7 @@
             </div> -->
             <a href="../pages/registration.php" class="nav-item nav-link registration"><i class="fas fa-book-open me-2"></i>Cadastro</a>
             <a href="../pages/launch.php" class="nav-item nav-link launch"><i class="fa fa-keyboard me-2"></i>Lançamento</a>
-            <a href="table.html" class="nav-item nav-link"><i class="fa fa-table me-2"></i>Relatório</a>
+            <a href="../pages/finance.php" class="nav-item nav-link finance"><i class="fa fa-table me-2"></i>Finanças</a>
             <!-- <div class="nav-item dropdown">
                 <a href="#" class="nav-link dropdown-toggle" data-bs-toggle="dropdown"><i
                         class="far fa-file-alt me-2"></i>Pages</a>
@@ -57,6 +57,10 @@
 
     if(formatURL == 'launch.php') {
 	    $('.launch').addClass('active');
+	}
+    
+    if(formatURL == 'finance.php') {
+	    $('.finance').addClass('active');
 	}
 
 </script>

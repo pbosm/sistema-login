@@ -63,18 +63,18 @@ class Functions
         }
 
         try {
-            $sql = $conn->prepare("SELECT id AS id, email AS email, senha FROM usuarios WHERE email = :email AND senha = :password");
+            $sql = $conn->prepare("SELECT * FROM usuarios WHERE email = :email AND senha = :password");
             $sql->bindParam(':email', $email);
             $sql->bindParam(':password', $password);
             $sql->execute();
-            $getUserId = $sql->fetchAll();
+            $getUserId = $sql->fetchAll(PDO::FETCH_ASSOC);
 
             foreach ($getUserId as $user) {
-                $getUserId['id'] = cryptS($user['id']);
+                $user['id'] = cryptS($user['id']);
             }
 
             $sessao = $_SESSION["conectado"] = true;
-            return array($sessao, cryptS($user['id']));
+            return array($sessao, $user);
 
         } catch (exception $e) {
             return "Erro: {$e}";
@@ -530,6 +530,92 @@ class Functions
         } catch (exception $e) {
             return "Erro: {$e}";
         }
+    }
+    public function getFinanceData($args)
+    {
+        $month = $args['month'];
+        $year = $args['year'];
+
+        $id = descryptS($args['id']);
+        require_once('../src/conn/conn.php');
+        $conn = Database::connectionPDO();
+
+        $result = [
+            'getBuy' => [],
+            'getTotalValue' => []
+        ];
+
+        try {
+            $sql = "SELECT product, value, place, date FROM compras WHERE MONTH(date) = :month AND YEAR(date) = :year AND id_usuario = :id";
+            $code = $conn->prepare($sql);
+            $code->bindParam(':month', $month);
+            $code->bindParam(':year', $year);
+            $code->bindParam(':id', $id);
+            $code->execute();
+            $getBuy = $code->fetchAll(PDO::FETCH_ASSOC);
+            $result['getBuy'] = $getBuy;
+
+            $sql = "SELECT SUM(value) as totalValue, date FROM compras WHERE MONTH(date) = :month AND YEAR(date) = :year AND id_usuario = :id";
+            $code = $conn->prepare($sql);
+            $code->bindParam(':month', $month);
+            $code->bindParam(':year', $year);
+            $code->bindParam(':id', $id);
+            $code->execute();
+            $getBuy = $code->fetchAll(PDO::FETCH_ASSOC);
+            $result['getTotalValue'] = $getBuy;
+
+            return $result;
+        } catch (exception $e) {
+            return "Erro: {$e}";
+        }
+    }
+    public function getData($args)
+    {
+        $id = descryptS($args);
+
+        require_once('../src/conn/conn.php');
+        $conn = Database::connectionPDO();
+
+        try {
+            $sql = "SELECT DISTINCT  MONTH(date) AS month, YEAR(date) AS year FROM compras WHERE id_usuario = :id GROUP BY month, year ORDER BY date";
+            $code = $conn->prepare($sql);
+            $code->bindParam(':id', $id);
+            $code->execute();
+            $getDate = $code->fetchAll(PDO::FETCH_ASSOC);
+
+            return $getDate;
+        } catch (exception $e) {
+            return "Erro: {$e}";
+        }
+
+    }
+
+    public function createProduct($args) {
+        $password = $args['password'];
+        $user = descryptS($args['user']);
+
+        $product = $args['product'];
+        $value = $args['value'];
+        $place = $args['place'];
+        $dateString = $args['date'];
+        $date = date_create_from_format('d/m/Y', $dateString);
+        $formattedDate = date_format($date, 'Y-m-d');
+
+        require_once('../src/conn/conn.php');
+        $conn = Database::connectionPDO();
+
+        if (!verifyPassword($password, $user)) {
+            throw new Exception("Senha incorreta");
+            // exit;
+        }
+
+        $sql = $conn->prepare("INSERT INTO compras (product, value, place, date, id_usuario) VALUES (:product, :value, :place, :date, :id)");
+        $sql->bindParam(':product', $product);
+        $sql->bindParam(':value', $value);
+        $sql->bindParam(':place', $place);
+        $sql->bindParam(':date', $formattedDate);
+        $sql->bindParam(':id', $user);
+        $sql->execute();
     }
 }
 
